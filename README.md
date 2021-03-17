@@ -22,7 +22,7 @@ pytorch 1.4+
 
 Download the glove word vectors and change the path in train.py in the line 34
 
-If you run the code in Linux, you should change the path of train.py in line 102, from '\\' to '/'
+If you run the code in Linux, you should change the path of train.py in line 102, from '\\\' to '/'
 
 ## ATSA Task
 python train.py -atsa -aspect_phrase -lr 5e-3 -batch_size 32 -model gcae_atsa -atsa_data rest -epochs 6
@@ -31,8 +31,10 @@ python train.py -atsa -aspect_phrase -lr 5e-3 -batch_size 32 -model gcae_atsa -a
 
 ## ACSA Task
 
-python train.py -lr 1e-2 -batch_size 32 -model gcae_acsa -acsa_data 2014  -epochs 5
-python train.py -lr 1e-2 -batch_size 32 -model gcae_acsa -acsa_data large  -epochs 13
+python train.py -lr 1e-2 -batch_size 32 -model gcae_acsa -acsa_data 2014  -epochs 5  
+
+python train.py -lr 1e-2 -batch_size 32 -model gcae_acsa -acsa_data large  -epochs 13  
+
 
 
 # Experiment Result
