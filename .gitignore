@@ -7,7 +7,7 @@ state_dict/
 *.h5
 *log*
 glove*
-.ipynb
+*.ipynb
 # OSX
 #
 .DS_Store
