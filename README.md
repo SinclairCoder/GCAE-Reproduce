@@ -12,10 +12,14 @@
 |   restaurant-large   |  4665   |  2426   |
 
 # Requirements
-tensorboardX-2.1
-sacremoses 0.0.43
-torchtext 0.5.0
-pytorch 1.4+
+tensorboardX-2.1  
+
+sacremoses 0.0.43  
+
+torchtext 0.5.0  
+
+pytorch 1.4+  
+
 
 # Run
 
