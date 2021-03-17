@@ -22,7 +22,7 @@ pytorch 1.4+
 
 Download the glove word vectors and change the path in train.py in the line 34
 
-If you run the code in Linux, you should change the path of train.py in line 102, from '\\\' to '/'
+If you run the code in Linux, you should change the path of train.py in line 102, from r'\\' to r'/'
 
 ## ATSA Task
 python train.py -atsa -aspect_phrase -lr 5e-3 -batch_size 32 -model gcae_atsa -atsa_data rest -epochs 6
@@ -38,6 +38,12 @@ python train.py -lr 1e-2 -batch_size 32 -model gcae_acsa -acsa_data large  -epoc
 
 
 # Experiment Result
+
+
+# Reference
+
+- https://github.com/wxue004cs/GCAE (authors' code)
+- https://github.com/songyouwei/ABSA-PyTorch
 
 
 
