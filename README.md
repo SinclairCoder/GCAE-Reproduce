@@ -29,9 +29,9 @@ Download the glove word vectors and change the path in train.py in the line 34
 If you run the code in Linux, you should change the path of train.py in line 102, from r'\\' to r'/'
 
 ## ATSA Task
-python train.py -atsa -aspect_phrase -lr 5e-3 -batch_size 32 -model gcae_atsa -atsa_data rest -epochs 6
+python train.py -atsa  -lr 5e-3 -batch_size 32 -model gcae_atsa -atsa_data rest -epochs 6
 
-python train.py -atsa -aspect_phrase -lr 5e-3 -batch_size 32 -model gcae_atsa -atsa_data laptop -epochs 5
+python train.py -atsa  -lr 5e-3 -batch_size 32 -model gcae_atsa -atsa_data laptop -epochs 5
 
 ## ACSA Task
 
