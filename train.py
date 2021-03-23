@@ -32,10 +32,13 @@ class Instructor:
 
 
         self.vectors = Vectors(name='data/glove.6B.300d_test.txt')
-        self.vectors.unk_init = torch.nn.init.uniform_  # follow the paper, but ...
-        self.text_field.build_vocab(self.train_data,self.test_data,vectors=self.vectors)
+        self.vectors.unk_init = torch.Tensor.uniform_(-0.25,0.25)  # follow the paper, but ...
+        self.text_field.build_vocab(self.train_data,self.test_data,vectors=self.vectors,unk_init = torch.Tensor.normal_(-0.25,0.25))
         self.aspect_field.build_vocab(self.train_data,self.test_data,vectors=self.vectors)
         self.sentiment_field.build_vocab(self.train_data,self.test_data,vectors=self.vectors)
+
+        self.text_pad_idx = text_field.vocab.stoi[text_field.pad_token]
+        self.aspect_pad_idx = aspect_field.vocab.stoi[aspect_field.pad_token]
 
         args.polarities_dim = len(self.sentiment_field.vocab)-1  # remove conflict
         args.embed_num = len(self.text_field.vocab) 
@@ -48,7 +51,7 @@ class Instructor:
         # self.aspect_embedding = load_aspect_embedding_from_w2v(self.aspect_field.vocab.itos,self.text_field.vocab.stoi,self.word_vecs)
         # self.aspect_embedding = torch.from_numpy(np.asarray(self.aspect_embedding, dtype=np.float32))
 
-        self.model = args.model_calss(args,self.text_field.vocab.vectors,self.aspect_field.vocab.vectors).to(args.device)
+        self.model = args.model_calss(args,self.text_field.vocab.vectors,self.aspect_field.vocab.vectors,text_pad_idx,aspect_pad_idx).to(args.device)
         if args.device.type == 'cuda': # 独显内存分配情况
             print("cuda memory allocated:", torch.cuda.memory_allocated(device=args.device.index))
 
@@ -83,7 +86,7 @@ class Instructor:
                 if self.args.device.type == 'cuda':
                     feature, aspect, target = feature.cuda(), aspect.cuda(), target.cuda()
                 optimizer.zero_grad()
-                logit,_,_ = self.model(feature,aspect)
+                logit = self.model(feature,aspect)
                 loss = criterion(logit,target)
                 loss.backward()
                 optimizer.step()
@@ -256,6 +259,7 @@ if __name__ == '__main__':
         args.dataset_file = ds_files['acsa'][args.acsa_data]
     args.optimizer = optimizers[args.optimizer]
     args.initializer = initializers[args.initializer]
+    torch.backends.cudnn.deterministic = True
     args.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     ins = Instructor(args)
     ins.run(5)

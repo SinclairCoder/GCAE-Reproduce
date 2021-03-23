@@ -4,7 +4,7 @@ import torch.nn as nn
 
 
 class GCAE_ATSA(nn.Module):
-    def __init__(self, args,text_field_weight,aspect_field_weight):
+    def __init__(self, args,text_field_weight,aspect_field_weight,text_pad_idx,aspect_pad_idx):
         super(GCAE_ATSA, self).__init__()
         print('atsa model')
         self.args = args
@@ -15,13 +15,15 @@ class GCAE_ATSA(nn.Module):
 
         Co = args.kernel_num
         Ks = [int(k) for k in args.kernel_sizes.split(',')]
-        self.embed = nn.Embedding(V,D)
+        self.embed = nn.Embedding(V,D,padding_idx = text_pad_idx)
         # self.embed.weight = nn.Parameter(args.embedding,requires_grad=True)
         self.embed.weight.data.copy_(text_field_weight)
+        self.embed.weight.requires_grad = True
 
-        self.aspect_embed = nn.Embedding(A,args.aspect_embed_dim)
+        self.aspect_embed = nn.Embedding(A,args.aspect_embed_dim,padding_idx=aspect_pad_idx)
         # self.aspect_embed.weight = nn.Parameter(args.aspect_embedding,requires_grad = True)
         self.aspect_embed.weight.data.copy_(aspect_field_weight)
+        self.aspect_embed.weight.requires_grad = True
 
         self.convs1 = nn.ModuleList([nn.Conv1d(D, Co, K) for K in Ks])  # in_channels,  out_channels, kernel_size
         self.convs2 = nn.ModuleList([nn.Conv1d(D, Co, K) for K in Ks]) 
@@ -32,7 +34,7 @@ class GCAE_ATSA(nn.Module):
         self.dropout = nn.Dropout(0.2)
 
         self.fc1 = nn.Linear(len(Ks)*Co, C)
-        self.fc_aspect = nn.Linear(128, Co)
+        self.fc_aspect = nn.Linear(100, Co)
 
 
     def forward(self, feature, aspect):
@@ -58,4 +60,4 @@ class GCAE_ATSA(nn.Module):
         x = torch.cat(x, 1)
         x = self.dropout(x)  # (N,len(Ks)*Co)
         logit = self.fc1(x)  # (N,C)
-        return logit, x, y
+        return logit
