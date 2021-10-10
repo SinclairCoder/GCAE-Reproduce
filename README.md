@@ -11,13 +11,13 @@ sacremoses 0.0.43
 
 torchtext 0.5.0  
 
-pytorch 1.4+  
+pytorch 1.9.0 
 
 
 # Run
 
 
-Download the glove word vectors and change the path in train.py in the line 34
+Download the glove word vectors and change the path in train.py in the line 33
 
 If you run the code in Linux, you should change the path of train.py in line 102, from r"\\" to r"/"
 

@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 class GCAE_ACSA(nn.Module):
-    def __init__(self,args,text_field_weight,aspect_field_weight,text_pad_idx,aspect_pad_idx):
+    def __init__(self,args,text_field_weight,aspect_field_weight):
         super(GCAE_ACSA,self).__init__()
 
         self.args = args
@@ -13,15 +13,13 @@ class GCAE_ACSA(nn.Module):
 
         Co = args.kernel_num
         Ks = [int(k) for k in args.kernel_sizes.split(',')]
-        self.embed = nn.Embedding(V,D,padding_idx=text_pad_idx)
+        self.embed = nn.Embedding(V,D)
         # self.embed.weight = nn.Parameter(args.embedding,requires_grad=True)
         self.embed.weight.data.copy_(text_field_weight)
-        self.embed.weight.requires_grad = True
 
-        self.aspect_embed = nn.Embedding(A,args.aspect_embed_dim,padding_idx=aspect_pad_idx)
+        self.aspect_embed = nn.Embedding(A,args.aspect_embed_dim)
         # self.aspect_embed.weight = nn.Parameter(args.aspect_embedding,requires_grad = True)
         self.aspect_embed.weight.data.copy_(aspect_field_weight)
-        self.aspect_embed.weight.requires_grad = True
 
         self.convs1 = nn.ModuleList([nn.Conv1d(D, Co, K) for K in Ks])  # in_channels,  out_channels, kernel_size
         self.convs2 = nn.ModuleList([nn.Conv1d(D, Co, K) for K in Ks]) 
@@ -34,8 +32,9 @@ class GCAE_ACSA(nn.Module):
         aspect_v = aspect_v.sum(1) / aspect_v.size(1)  # (batch_size,)
 
         x = [torch.tanh(conv(feature.transpose(1, 2))) for conv in self.convs1]  # [(N,Co,L), ...]*len(Ks)
-        y = [torch.relu(conv(feature.transpose(1, 2)) + self.fc_aspect(aspect_v).unsqueeze(2)) for conv in self.convs2]
-
+        # y = [torch.relu(conv(feature.transpose(1, 2)) + self.fc_aspect(aspect_v).unsqueeze(2)) for conv in self.convs2]
+        # GCN model
+        y = [torch.relu(conv(feature.transpose(1, 2)))  for conv in self.convs2]
         x = [i*j for i, j in zip(x, y)]
 
         # pooling method
@@ -44,6 +43,6 @@ class GCAE_ACSA(nn.Module):
 
         x0 = torch.cat(x0, 1)
         logit = self.fc1(x0)  # (N,C)
-        return logit
+        return logit, x, y
 
 

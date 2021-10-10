@@ -4,7 +4,7 @@ import datetime
 import torch
 import torchtext.data as data
 import json
-from w2v import *
+# from w2v import *
 import math
 from mydatasets import SemEval,load_semeval_data
 from tensorboardX import SummaryWriter
@@ -15,30 +15,26 @@ from torchtext.vocab import GloVe
 from models import GCAE_ACSA,GCAE_ATSA
 
 
-
 class Instructor:
     def __init__(self,args):
         self.args = args
         self.text_field = data.Field(lower=True,tokenize='moses')
         if not args.aspect_phrase:
-            self.aspect_field = data.Field(sequential=False)
+          self.aspect_field = data.Field(sequential=False)
         else:
-            print('aspect phrase')
-            self.aspect_field = data.Field(lower=True, tokenize='moses')
+          print('aspect phrase')
+          self.aspect_field = data.Field(lower=True, tokenize='moses')
         self.sentiment_field = data.Field(sequential=False)
 
         self.train_data, self.test_data,self.hard_test_data = load_semeval_data(self.text_field,self.aspect_field,self.sentiment_field,args.dataset_file)
         self.train_iter,self.test_iter, self.hard_test_iter = data.Iterator.splits((self.train_data,self.test_data,self.hard_test_data),batch_sizes=(args.batch_size,len(self.test_data),len(self.hard_test_data)),device=self.args.device)
 
 
-        self.vectors = Vectors(name='data/glove.6B.300d_test.txt')
-        self.vectors.unk_init = torch.Tensor.uniform_(-0.25,0.25)  # follow the paper, but ...
-        self.text_field.build_vocab(self.train_data,self.test_data,vectors=self.vectors,unk_init = torch.Tensor.normal_(-0.25,0.25))
+        self.vectors = Vectors(name='../glove.840B.300d.txt')
+        self.vectors.unk_init = torch.nn.init.uniform_  # follow the paper, but ...
+        self.text_field.build_vocab(self.train_data,self.test_data,vectors=self.vectors)
         self.aspect_field.build_vocab(self.train_data,self.test_data,vectors=self.vectors)
         self.sentiment_field.build_vocab(self.train_data,self.test_data,vectors=self.vectors)
-
-        self.text_pad_idx = text_field.vocab.stoi[text_field.pad_token]
-        self.aspect_pad_idx = aspect_field.vocab.stoi[aspect_field.pad_token]
 
         args.polarities_dim = len(self.sentiment_field.vocab)-1  # remove conflict
         args.embed_num = len(self.text_field.vocab) 
@@ -51,7 +47,7 @@ class Instructor:
         # self.aspect_embedding = load_aspect_embedding_from_w2v(self.aspect_field.vocab.itos,self.text_field.vocab.stoi,self.word_vecs)
         # self.aspect_embedding = torch.from_numpy(np.asarray(self.aspect_embedding, dtype=np.float32))
 
-        self.model = args.model_calss(args,self.text_field.vocab.vectors,self.aspect_field.vocab.vectors,text_pad_idx,aspect_pad_idx).to(args.device)
+        self.model = args.model_calss(args,self.text_field.vocab.vectors,self.aspect_field.vocab.vectors).to(args.device)
         if args.device.type == 'cuda': # 独显内存分配情况
             print("cuda memory allocated:", torch.cuda.memory_allocated(device=args.device.index))
 
@@ -80,13 +76,13 @@ class Instructor:
                 if len(feature)<2:
                     continue
                 if not args.aspect_phrase:
-                    aspect.unsqueeze_(0) # torch.Size([32] => torch.Size([1, 32]
+                  aspect.unsqueeze_(0) # torch.Size([32] => torch.Size([1, 32]
                 aspect.t_() # torch.Size([1, 32] => torch.Size([32, 1] ,that  equals  batch_first = True 
                 target.sub_(1) # index align
                 if self.args.device.type == 'cuda':
                     feature, aspect, target = feature.cuda(), aspect.cuda(), target.cuda()
                 optimizer.zero_grad()
-                logit = self.model(feature,aspect)
+                logit,_,_ = self.model(feature,aspect)
                 loss = criterion(logit,target)
                 loss.backward()
                 optimizer.step()
@@ -102,7 +98,7 @@ class Instructor:
                     # save model
                     if test_acc > max_test_acc_overall:
                         # linux environment  fix \\ => /
-                        if not os.path.exists(os.getcwd()+'\\state_dict'):
+                        if not os.path.exists(os.getcwd()+'/state_dict'):
                             os.mkdir('state_dict')
                         if self.args.atsa:
                             path = 'state_dict/{0}_{1}_acc{2}_{3}'.format(self.args.model,self.args.atsa_data,round(test_acc,4),round(hard_test_acc,4))
@@ -129,7 +125,7 @@ class Instructor:
                 feature,aspect,target = batch.text,batch.aspect,batch.sentiment
                 feature.t_() # transpose,  that  equals  batch_first = True 
                 if not args.aspect_phrase:
-                    aspect.unsqueeze_(0) # torch.Size([32] => torch.Size([1, 32]
+                  aspect.unsqueeze_(0)
                 aspect.t_() # torch.Size([1, 32] => torch.Size([32, 1] ,that  equals  batch_first = True 
                 target.sub_(1) # index align
                 if self.args.device.type == 'cuda':
@@ -259,7 +255,6 @@ if __name__ == '__main__':
         args.dataset_file = ds_files['acsa'][args.acsa_data]
     args.optimizer = optimizers[args.optimizer]
     args.initializer = initializers[args.initializer]
-    torch.backends.cudnn.deterministic = True
     args.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     ins = Instructor(args)
-    ins.run(5)
+    ins.run(1)
